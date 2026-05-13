@@ -1,0 +1,15 @@
+# returnX AI — Requirements
+flask==3.1.1
+flask-cors==5.0.1
+python-dotenv==1.1.0
+
+# LLM & Agentic Frameworks
+langchain>=0.3.0
+langchain-groq>=0.2.0
+langchain-community>=0.3.0
+
+# RAG — Vector Store
+chromadb>=0.5.0
+
+# Groq SDK
+groq>=0.25.0

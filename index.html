@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="returnX AI — Always-on AI tax assistant for Indian gig workers.">
+    <title>returnX AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+        <div class="navbar__inner">
+            <a href="#" class="navbar__brand">
+                <div class="navbar__logo">
+                    <span class="material-icons-round">auto_awesome</span>
+                </div>
+                <span class="navbar__name">returnX AI</span>
+            </a>
+            <div class="navbar__status">
+                <span class="status-dot"></span>
+                Active 24/7
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-layout">
+
+        <!-- ===== LEFT: Paste Panel (always visible) ===== -->
+        <aside class="paste-panel" id="paste-panel">
+
+            <!-- API Key (collapsible) -->
+            <div class="paste-panel__section">
+                <button class="collapse-btn" id="apikey-toggle">
+                    <span class="material-icons-round">vpn_key</span>
+                    API Key
+                    <span class="material-icons-round collapse-btn__arrow" id="apikey-arrow">expand_more</span>
+                </button>
+                <div class="collapse-body" id="apikey-body">
+                    <div class="api-key-row" id="api-key-row">
+                        <input type="password" class="api-key-row__input" id="api-key-input"
+                            placeholder="Paste Groq API key (gsk_...)" autocomplete="off">
+                    </div>
+                    <a href="https://console.groq.com/keys" target="_blank" class="api-key-link">Get free key →</a>
+                </div>
+            </div>
+
+            <!-- Paste Area -->
+            <div class="paste-panel__section">
+                <h2 class="paste-panel__title">
+                    <span class="material-icons-round">sms</span>
+                    Paste New Messages
+                </h2>
+                <textarea class="paste-area" id="message-input" spellcheck="false"
+                    placeholder="Paste SMS messages anytime...
+
+Example:
+Swiggy has transferred ₹1,243 to your account
+Zomato Foods credited ₹876 on 12-Apr
+HPCL petrol ₹500 debited from account"></textarea>
+                <div class="paste-actions">
+                    <span class="char-count" id="char-count">0 chars</span>
+                    <button class="add-btn" id="add-btn" type="button">
+                        <span class="add-btn__content" id="add-content">
+                            <span class="material-icons-round">add_circle</span>
+                            Add &amp; Analyse
+                        </span>
+                        <span class="add-btn__loader" id="add-loader">
+                            <span class="spinner"></span> Parsing…
+                        </span>
+                    </button>
+                </div>
+                <div id="error-area"></div>
+                <!-- Agent Progress Stepper -->
+                <div class="agent-stepper" id="agent-stepper" style="display:none">
+                    <div class="agent-step" id="step-1">
+                        <span class="agent-step__dot"></span>
+                        <span class="agent-step__label">SMS Parser Agent</span>
+                    </div>
+                    <div class="agent-step" id="step-2">
+                        <span class="agent-step__dot"></span>
+                        <span class="agent-step__label">Tax Advisor Agent</span>
+                    </div>
+                    <div class="agent-step" id="step-3">
+                        <span class="agent-step__dot"></span>
+                        <span class="agent-step__label">Insights Agent</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Log -->
+            <div class="paste-panel__section">
+                <div class="history-head">
+                    <h3 class="history-title">
+                        <span class="material-icons-round">history</span>
+                        Activity Log
+                    </h3>
+                    <button class="clear-all-btn" id="clear-all-btn" title="Clear all data">
+                        <span class="material-icons-round">delete_sweep</span>
+                    </button>
+                </div>
+                <div class="history-list" id="history-list">
+                    <p class="history-empty" id="history-empty">No messages added yet.</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ===== RIGHT: Dashboard (always visible) ===== -->
+        <main class="dashboard" id="dashboard">
+
+            <!-- Summary Cards Row -->
+            <div class="summary-cards">
+                <div class="summary-card summary-card--green">
+                    <span class="material-icons-round summary-card__icon">trending_up</span>
+                    <div>
+                        <span class="summary-card__label">Total Income</span>
+                        <span class="summary-card__value" id="total-income">₹0</span>
+                    </div>
+                </div>
+
+                <div class="summary-card summary-card--amber">
+                    <span class="material-icons-round summary-card__icon">receipt_long</span>
+                    <div>
+                        <span class="summary-card__label">TDS Estimated (1%)</span>
+                        <span class="summary-card__value" id="summary-tds">₹0</span>
+                    </div>
+                </div>
+
+                <div class="summary-card summary-card--teal">
+                    <span class="material-icons-round summary-card__icon">savings</span>
+                    <div>
+                        <span class="summary-card__label">Sec 44AD Taxable (6%)</span>
+                        <span class="summary-card__value" id="summary-44ad">₹0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== SMART JOB PICKER — Real-Time Suggestion Engine ===== -->
+            <div class="job-picker" id="job-picker">
+                <div class="job-picker__head">
+                    <div class="job-picker__title-row">
+                        <div class="job-picker__icon-wrap">
+                            <span class="material-icons-round">bolt</span>
+                        </div>
+                        <div>
+                            <h2 class="job-picker__title">Smart Job Picker</h2>
+                            <p class="job-picker__subtitle">Paste app notifications or simulate live orders — AI picks the best one</p>
+                        </div>
+                    </div>
+                    <span class="job-picker__badge">
+                        <span class="job-picker__badge-dot"></span>
+                        REAL-TIME
+                    </span>
+                </div>
+
+                <div class="job-picker__body">
+
+                    <!-- Mode Tabs -->
+                    <div class="job-mode-tabs" id="job-mode-tabs">
+                        <button class="job-mode-tab job-mode-tab--active" data-mode="paste">
+                            <span class="material-icons-round">content_paste</span>
+                            Paste Notifications
+                        </button>
+                        <button class="job-mode-tab" data-mode="simulate">
+                            <span class="material-icons-round">play_circle</span>
+                            Simulate Live
+                        </button>
+                    </div>
+
+                    <!-- MODE 1: Paste Notification Text -->
+                    <div class="job-mode-panel" id="job-mode-paste">
+                        <div class="notif-paste-info">
+                            <span class="material-icons-round">info</span>
+                            <span>Copy notification text from your phone's notification shade and paste below. AI auto-extracts platform, pay, distance &amp; delivery type.</span>
+                        </div>
+                        <textarea class="notif-paste-area" id="notif-paste-input" spellcheck="false"
+                            placeholder="Paste your app notifications here...
+
+Example:
+🍔 Swiggy: New order! ₹45 for 3.2 km delivery. Pickup from Meghana Foods, deliver to Koramangala.
+
+⚡ Zepto: Delivery request! Earn ₹35. Distance: 1.5 km. Grocery order from Zepto Dark Store.
+
+🍕 Zomato: Order available! ₹62 payout, 4.1 km. Food pickup from Paradise Biryani."></textarea>
+                        <div class="notif-paste-actions">
+                            <span class="notif-char-count" id="notif-char-count">0 chars</span>
+                            <button class="notif-paste-sample" id="notif-paste-sample" type="button">
+                                <span class="material-icons-round">science</span>
+                                Load Sample
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- MODE 2: Simulate Live Notifications -->
+                    <div class="job-mode-panel" id="job-mode-simulate" style="display:none">
+                        <div class="notif-simulate-info">
+                            <span class="material-icons-round">smartphone</span>
+                            <span>Simulates real push notifications from gig apps. Watch them appear as they would on a rider's phone!</span>
+                        </div>
+                        <div class="notif-feed" id="notif-feed">
+                            <p class="notif-feed__empty" id="notif-feed-empty">
+                                <span class="material-icons-round">notifications_none</span>
+                                No notifications yet. Click "Simulate" to start.
+                            </p>
+                        </div>
+                        <button class="notif-simulate-btn" id="notif-simulate-btn" type="button">
+                            <span class="material-icons-round">cell_tower</span>
+                            Simulate Incoming Notifications
+                        </button>
+                    </div>
+
+                    <!-- Extracted Jobs Preview (shown after parse/simulate) -->
+                    <div class="notif-extracted" id="notif-extracted" style="display:none">
+                        <div class="notif-extracted__head">
+                            <span class="material-icons-round">checklist</span>
+                            <span>Extracted Job Offers</span>
+                            <span class="notif-extracted__count" id="notif-extracted-count">0</span>
+                        </div>
+                        <div class="notif-extracted__cards" id="notif-extracted-cards"></div>
+                    </div>
+
+                    <!-- Compare Button -->
+                    <button class="job-compare-btn" id="job-compare-btn" type="button">
+                        <span class="job-compare-btn__content">
+                            <span class="material-icons-round">compare_arrows</span>
+                            Compare &amp; Suggest Best Job
+                        </span>
+                        <span class="job-compare-btn__loader">
+                            <span class="spinner"></span> AI Analyzing...
+                        </span>
+                    </button>
+                    <div id="job-error-area"></div>
+
+                    <!-- Results Area (hidden until comparison) -->
+                    <div class="job-results" id="job-results" style="display:none">
+
+                        <!-- Winner Card -->
+                        <div class="job-winner" id="job-winner">
+                            <div class="job-winner__badge">
+                                <span class="material-icons-round">emoji_events</span>
+                                AI RECOMMENDATION
+                            </div>
+                            <h3 class="job-winner__platform" id="job-winner-platform">—</h3>
+                            <p class="job-winner__reason" id="job-winner-reason">—</p>
+                            <div class="job-winner__confidence">
+                                <div class="job-winner__confidence-bar">
+                                    <div class="job-winner__confidence-fill" id="job-winner-confidence-fill" style="width:0%"></div>
+                                </div>
+                                <span class="job-winner__confidence-label" id="job-winner-confidence-label">0% confidence</span>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Comparison Cards -->
+                        <div class="job-comparison" id="job-comparison"></div>
+
+                        <!-- Pro Tip -->
+                        <div class="job-tip" id="job-tip" style="display:none">
+                            <span class="material-icons-round">tips_and_updates</span>
+                            <span id="job-tip-text"></span>
+                        </div>
+
+                        <!-- Traffic Analysis -->
+                        <div id="traffic-container"></div>
+
+                        <!-- Live Delivery Map -->
+                        <div class="job-map-card" id="job-map-card">
+                            <div class="job-map-card__head">
+                                <span class="material-icons-round">map</span>
+                                <h3>Delivery Zone Map</h3>
+                                <span class="job-map-card__live">
+                                    <span class="job-map-card__live-dot"></span>
+                                    LIVE
+                                </span>
+                            </div>
+                            <div class="job-map-card__body">
+                                <iframe
+                                    id="job-map-iframe"
+                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d62236.3982056889!2d77.57!3d12.97!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1670c9b44e6d%3A0xf8dfc3e8517e4fe0!2sBengaluru%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1"
+                                    width="100%"
+                                    height="250"
+                                    style="border:0;border-radius:8px"
+                                    allowfullscreen=""
+                                    loading="lazy"
+                                    referrerpolicy="no-referrer-when-downgrade">
+                                </iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Two-column: Income | Expenses -->
+            <div class="dash-grid">
+
+                <!-- Income Panel -->
+                <div class="dash-panel dash-panel--income">
+                    <div class="dash-panel__head">
+                        <span class="material-icons-round dash-panel__icon">trending_up</span>
+                        <h3 class="dash-panel__title">Income</h3>
+                        <span class="dash-panel__count" id="income-count">0 entries</span>
+                    </div>
+                    <div class="dash-table-wrap">
+                        <table class="dash-table" id="income-table">
+                            <thead>
+                                <tr><th>Platform</th><th>Amount</th><th>Date</th></tr>
+                            </thead>
+                            <tbody id="income-tbody"></tbody>
+                        </table>
+                        <p class="dash-table__empty" id="income-empty">No income recorded yet</p>
+                    </div>
+                    <div class="dash-total dash-total--green">
+                        <span class="dash-total__label">Total Income</span>
+                        <span class="dash-total__value" id="income-total-val">₹0</span>
+                    </div>
+                </div>
+
+            </div>
+
+
+
+            <!-- Charts Row -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-card__head">
+                        <span class="material-icons-round chart-card__icon chart-card__icon--green">bar_chart</span>
+                        <h3 class="chart-card__title">Income by Platform</h3>
+                    </div>
+                    <div class="chart-card__body">
+                        <canvas id="income-chart"></canvas>
+                        <p class="chart-card__empty" id="income-chart-empty">No income data yet</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Insights Card -->
+            <div class="insights-card" id="insights-card">
+                <div class="insights-card__head">
+                    <span class="material-icons-round">lightbulb</span>
+                    <h3>AI Insights</h3>
+                </div>
+                <div class="insights-card__body" id="insights-body">
+                    <p class="insights-card__empty">Add some messages to see insights.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="groq.js"></script>
+    <script src="agents.js"></script>
+    <script src="job-picker.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
